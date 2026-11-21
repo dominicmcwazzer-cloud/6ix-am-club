@@ -29,7 +29,7 @@ a { color: inherit; }
 
 /* top bar */
 .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-.top img { height: 46px; display: block; }
+.top img { height: 64px; display: block; }
 .pill { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; background: rgba(255,90,31,.12); border: 1px solid rgba(255,90,31,.32); color: var(--route); font: 700 11px var(--ui); letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; }
 .pill.ghost { background: transparent; border-color: var(--border); color: var(--t2); }
 

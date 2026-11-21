@@ -1,5 +1,5 @@
 // Offline shell only. API calls always go to the network.
-const CACHE = 'sixam-v2';
+const CACHE = 'sixam-v3';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'config.js', 'manifest.webmanifest',
   'assets/lockup-white.png', 'assets/6ixStencil-Bold.ttf', 'assets/6ixClub-Bold.ttf', 'assets/icon-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
