@@ -4,7 +4,9 @@
 (function () {
   'use strict';
   const CFG = window.SIX_CONFIG || {};
-  const DEMO = !CFG.API_URL;
+  const DEMO = !CFG.API_URL || new URLSearchParams(location.search).has('demo');
+  // palette: ?theme=mono|firstlight|orange overrides config (used for the palette board)
+  document.documentElement.dataset.theme = new URLSearchParams(location.search).get('theme') || CFG.THEME || 'mono';
   const TZ = 'Africa/Johannesburg';
   const $app = document.getElementById('app');
   const LOGO = '<img src="assets/lockup-white.png" alt="6ix AM Club">';
@@ -240,7 +242,7 @@
         </div>`;
     }
     $app.innerHTML = `
-      <div class="top">${LOGO}<a class="pill" href="#/me">🔥 ${s.streak} run streak</a></div>
+      <div class="top">${LOGO}<a class="pill" href="#/me"><svg width="11" height="13" viewBox="0 0 12 14" fill="currentColor" aria-hidden="true"><path d="M6 0S1 4 1 8a5 5 0 0010 0c0-2-1-3-1-3s-1 2-2 2 0-4-2-7z"/></svg>${s.streak} run streak</a></div>
       <div class="label">${esc(new Date().toLocaleDateString('en-ZA', { weekday: 'long', timeZone: TZ }))}</div>
       <h1 class="h1">Morning, ${esc(firstName(m.name))}.</h1>
       ${runCard}
