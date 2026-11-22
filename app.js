@@ -5,7 +5,7 @@
   'use strict';
   const CFG = window.SIX_CONFIG || {};
   const DEMO = !CFG.API_URL || new URLSearchParams(location.search).has('demo');
-  // palette: ?theme=mono|firstlight|orange overrides config (used for the palette board)
+  // palette: ?theme=mono|firstlight overrides config (used for the palette board)
   document.documentElement.dataset.theme = new URLSearchParams(location.search).get('theme') || CFG.THEME || 'mono';
   const TZ = 'Africa/Johannesburg';
   const $app = document.getElementById('app');
