@@ -1,7 +1,7 @@
 {
   "name": "6ix AM Club",
   "short_name": "6ix AM",
-  "description": "Saturday 6 AM runs. Book, check in, keep the streak.",
+  "description": "6 AM runs in Mamelodi. Book, check in, keep the streak.",
   "start_url": "./#/home",
   "scope": "./",
   "display": "standalone",

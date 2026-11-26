@@ -42,6 +42,7 @@
     run_not_found: "We couldn't find that run. Scan the QR again.",
     run_cancelled: 'This run was cancelled.',
     member_not_found: "We couldn't find your profile. Sign up again with the same number.",
+    no_member: "No member with that number yet. Join below.",
     name_required: 'Add your name.',
     phone_invalid: 'Check your cellphone number.',
     bad_pin: 'Wrong organiser PIN.',
@@ -120,6 +121,7 @@
           switch (p.action) {
             case 'status': { const n = db.runs.filter(r => r.date >= t).sort((a, b) => a.date.localeCompare(b.date))[0]; return { today: t, next: n || null }; }
             case 'register': return { member: this.member(db, p.name, p.phone) };
+            case 'signin': { const m = db.members.find(x => x.phone === this.phone(p.phone)); if (!m) throw 'no_member'; return { member: Object.assign({ existing: true }, m) }; }
             case 'me': { const m = db.members.find(x => x.member_id === p.member_id); if (!m) throw 'member_not_found'; return { member: m, stats: this.stats(db, m.member_id) }; }
             case 'checkin': {
               const run = db.runs.find(r => r.run_id === p.run_id); if (!run) throw 'run_not_found';
@@ -164,7 +166,7 @@
   }
   const go = h => { if (location.hash === h) route(); else location.hash = h; };
   const demoNote = () => DEMO ? '<div class="demo">Demo mode: saved on this phone only. Today\'s check-in code is <b>DEMO</b>, organiser PIN <b>6060</b>.</div>' : '';
-  const loading = () => { $app.innerHTML = '<div class="spinner" aria-label="Loading"></div>'; };
+  const loading = () => { $app.innerHTML = '<div class="splash" aria-label="Loading"><img src="assets/lockup-white.png" alt="6ix AM Club"><i></i></div>'; };
 
   async function route() {
     window.scrollTo(0, 0);
@@ -185,12 +187,35 @@
   window.addEventListener('hashchange', route);
 
   /* ---------- views ---------- */
-  function viewWelcome() {
-    $app.innerHTML = `
+  const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+  function signedIn(member, existing) {
+    store.set('six.member', { member_id: member.member_id, name: member.name });
+    toast(existing ? `Welcome back, ${firstName(member.name)}.` : `Welcome to the club, ${firstName(member.name)}.`);
+    const after = store.get('six.after', null); store.del('six.after');
+    go(after || '#/home');
+  }
+  function viewWelcome(mode) {
+    const signin = mode === 'signin';
+    // iPhone keeps home-screen apps separate from Safari: nudge people to install first, then join there
+    const tip = (isIOS() && !standalone() && !signin)
+      ? '<div class="card" style="margin-top:18px"><div class="label route">Tip</div><p class="small" style="margin:6px 0 0">Add it to your Home Screen first (Share → Add to Home Screen), then join from there. iPhone keeps the two separate.</p></div>' : '';
+    $app.innerHTML = signin ? `
       <div class="top">${LOGO}</div>
-      <div class="label route" style="margin-top:28px">Saturday · 06:00</div>
+      <div class="label route" style="margin-top:28px">Welcome back</div>
+      <h1 class="h1">Already<br>a member?</h1>
+      <p class="body">Sign in with the number you joined with.</p>
+      <form id="f" novalidate>
+        <label class="field"><span class="label">Cellphone number</span>
+          <input class="input" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="082 123 4567" required></label>
+        <button class="btn" type="submit">Sign in</button>
+      </form>
+      <a class="btn secondary" href="#" id="swap">New here? Join the club</a>
+      ${demoNote()}` : `
+      <div class="top">${LOGO}</div>
+      <div class="label route" style="margin-top:28px">6 AM · Mamelodi</div>
       <h1 class="h1">Some clubs close at 6.<br>Ours opens.</h1>
-      <p class="body">Join once, then check in at the start line every Saturday. Every run counts toward your streak.</p>
+      <p class="body">Join once, then check in at the start line on run days. Every run counts toward your streak.</p>
       <form id="f" novalidate>
         <label class="field"><span class="label">Your name</span>
           <input class="input" name="name" autocomplete="name" placeholder="Name and surname" required></label>
@@ -200,22 +225,32 @@
           <span>6ix AM Club can keep my name, number and run check-ins to run the club and contact me about runs. I can ask for them to be deleted any time.</span></label>
         <button class="btn" type="submit">Join the club</button>
       </form>
-      <p class="small" style="margin-top:14px">Already joined on another phone? Use the same number and we'll find you.</p>
+      <a class="btn secondary" href="#" id="swap">Already joined? Sign in</a>
+      ${tip}
       ${demoNote()}`;
+    document.getElementById('swap').onclick = e => { e.preventDefault(); viewWelcome(signin ? 'join' : 'signin'); };
     const f = document.getElementById('f');
     f.addEventListener('submit', async e => {
       e.preventDefault();
-      const name = f.name.value.trim(), phone = f.phone.value.trim();
-      if (!name) return toast(ERR.name_required);
+      const phone = f.phone.value.trim();
       if (phone.replace(/\D/g, '').length < 9) return toast(ERR.phone_invalid);
+      const b = f.querySelector('button[type=submit]');
+      if (signin) {
+        b.disabled = true; b.textContent = 'Signing in…';
+        const r = await api('signin', { phone });
+        if (r.ok) return signedIn(r.member, true);
+        b.disabled = false; b.textContent = 'Sign in';
+        if (r.error === 'no_member') { toast(ERR.no_member); return viewWelcome('join'); }
+        if (r.error === 'unknown_action') { toast('Add your name too, same number as before.'); return viewWelcome('join'); }
+        return toast(errMsg(r.error));
+      }
+      const name = f.name.value.trim();
+      if (!name) return toast(ERR.name_required);
       if (!f.consent.checked) return toast('Tick the box to join.');
-      const b = f.querySelector('button'); b.disabled = true; b.textContent = 'Joining…';
+      b.disabled = true; b.textContent = 'Joining…';
       const r = await api('register', { name, phone, consent: true });
       if (!r.ok) { b.disabled = false; b.textContent = 'Join the club'; return toast(errMsg(r.error)); }
-      store.set('six.member', { member_id: r.member.member_id, name: r.member.name });
-      toast(r.member.existing ? `Welcome back, ${firstName(r.member.name)}.` : `Welcome to the club, ${firstName(r.member.name)}.`);
-      const after = store.get('six.after', null); store.del('six.after');
-      go(after || '#/home');
+      signedIn(r.member, r.member.existing);
     });
   }
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>6ix AM Club</title>
-<meta name="description" content="Saturday 6 AM runs in Mamelodi. Book the run, check in at the start line, keep the streak.">
+<meta name="description" content="6 AM runs in Mamelodi. Book the run, check in at the start line, keep the streak.">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,14 +14,15 @@
 <link rel="icon" href="assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unica+One&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unica+One&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="styles.css">
+<style>html,body{background:#000;margin:0}.splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;background:#000}.splash img{width:58%;max-width:260px;animation:sp-in .6s ease-out both}.splash i{display:block;width:64px;height:3px;border-radius:2px;background:#222;overflow:hidden;position:relative}.splash i:after{content:"";position:absolute;inset:0;width:40%;background:#a9bfff;border-radius:2px;animation:sp-bar 1s ease-in-out infinite}@keyframes sp-in{from{opacity:0;transform:translateY(6px)}}@keyframes sp-bar{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}</style>
 </head>
 <body>
-<main id="app" aria-live="polite"></main>
+<main id="app" aria-live="polite"><div class="splash" aria-label="Loading"><img src="assets/lockup-white.png" alt="6ix AM Club"><i></i></div></main>
 <div id="toast" role="status"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="config.js"></script>
-<script src="app.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script defer src="config.js"></script>
+<script defer src="app.js"></script>
 </body>
 </html>
