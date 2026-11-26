@@ -74,12 +74,11 @@
           seed: t, pin: '6060',
           members: (db && db.members) || [{ member_id: 'Mdemo01', name: 'Thando M.', phone: '27820000001' }, { member_id: 'Mdemo02', name: 'Lebo K.', phone: '27820000002' }],
           runs: [
-            ...prev.map((d, i) => ({ run_id: 'R-' + d, date: d, time: '06:00', title: 'Saturday 5K · Vol.0' + (i + 1), location: 'Jack Budha, Mamelodi', ticket_url: '', code: 'PAST', status: 'open' })),
-            { run_id: 'R-' + t, date: t, time: '06:00', title: 'Saturday 5K', location: 'Jack Budha, Mamelodi', ticket_url: 'https://www.quicket.co.za/', code: 'DEMO', status: 'open' },
-            { run_id: 'R-' + n, date: n, time: '06:00', title: 'Saturday 5K', location: 'Jack Budha, Mamelodi', ticket_url: 'https://www.quicket.co.za/', code: 'NEXT', status: 'open' },
+            ...prev.map((d, i) => ({ run_id: 'R-' + d, date: d, time: '06:00', title: 'Club run · Vol.0' + (i + 1), location: 'Mamelodi', ticket_url: '', code: 'PAST', status: 'open' })),
+            { run_id: 'R-2026-12-05', date: '2026-12-05', time: '05:30', title: 'Final Run of 2026 · 7KM × Dinho Cafe', location: 'Mamelodi', ticket_url: 'https://www.quicket.co.za/events/382399-5thdec26/', code: 'DEMO', status: 'open' },
           ],
           checkins: [],
-          bookings: [{ run_id: 'R-' + t, name: 'Thando M.', phone: '27820000001' }, { run_id: 'R-' + t, name: 'Sipho N.', phone: '27820000003' }],
+          bookings: [{ run_id: 'R-2026-12-05', name: 'Thando M.', phone: '27820000001' }, { run_id: 'R-2026-12-05', name: 'Sipho N.', phone: '27820000003' }],
         };
         // seed a little history for the demo members
         prev.forEach(d => db.checkins.push({ run_id: 'R-' + d, member_id: 'Mdemo01', name: 'Thando M.', phone: '27820000001', method: 'qr', at: d + 'T06:02:00' }));
@@ -122,6 +121,7 @@
             case 'status': { const n = db.runs.filter(r => r.date >= t).sort((a, b) => a.date.localeCompare(b.date))[0]; return { today: t, next: n || null }; }
             case 'register': return { member: this.member(db, p.name, p.phone) };
             case 'signin': { const m = db.members.find(x => x.phone === this.phone(p.phone)); if (!m) throw 'no_member'; return { member: Object.assign({ existing: true }, m) }; }
+            case 'vote': { db.votes = (db.votes || []).filter(v => v.member_id !== p.member_id); db.votes.push({ member_id: p.member_id, feature: p.feature }); return {}; }
             case 'me': { const m = db.members.find(x => x.member_id === p.member_id); if (!m) throw 'member_not_found'; return { member: m, stats: this.stats(db, m.member_id) }; }
             case 'checkin': {
               const run = db.runs.find(r => r.run_id === p.run_id); if (!run) throw 'run_not_found';
@@ -182,6 +182,7 @@
     }
     if (page === 'checkin') return viewCheckin(params);
     if (page === 'me') return viewMe();
+    if (page === 'in') return viewIn();
     return viewHome();
   }
   window.addEventListener('hashchange', route);
@@ -193,7 +194,7 @@
     store.set('six.member', { member_id: member.member_id, name: member.name });
     toast(existing ? `Welcome back, ${firstName(member.name)}.` : `Welcome to the club, ${firstName(member.name)}.`);
     const after = store.get('six.after', null); store.del('six.after');
-    go(after || '#/home');
+    go(after || (existing ? '#/home' : '#/in'));
   }
   function viewWelcome(mode) {
     const signin = mode === 'signin';
@@ -254,8 +255,62 @@
     });
   }
 
+  /* ---------- you're in (once, right after joining) ---------- */
+  const FEATURES = [['board', 'The Board'], ['live', 'Live run'], ['badges', 'Badges'], ['feed', 'Run feed']];
+  async function sendVote() {
+    const v = store.get('six.vote.pending', null), m = me();
+    if (!v || !m) return;
+    const r = await api('vote', { member_id: m.member_id, feature: v });
+    if (r.ok) store.del('six.vote.pending');
+  }
+  async function viewIn() {
+    loading();
+    const m = me();
+    const st = await api('status');
+    const next = st.ok ? st.next : null;
+    const ios = isIOS();
+    const install = standalone() ? '' : `<li><b>Put it on your Home Screen.</b> ${ios ? 'Tap Share, then <i>Add to Home Screen</i>.' : 'Tap ⋮ in your browser, then <i>Add to Home screen</i>.'} One tap on run morning.</li>`;
+    const runCard = next ? `<div class="card hero">
+        <div class="label route">Next run</div>
+        <div class="date-big">${dayMonth(next.date).day} ${esc(dayMonth(next.date).mon)}</div>
+        <div class="h2">${esc(next.title)}</div>
+        <div class="meta" style="margin-top:10px"><span>${esc(fmtDate(next.date))}</span><span>${esc(next.time)}</span><span>${esc(next.location)}</span></div>
+        ${next.ticket_url ? `<a class="btn" href="${esc(next.ticket_url)}" target="_blank" rel="noopener">Get your ticket</a>` : ''}
+      </div>` : '';
+    const voted = store.get('six.vote', null);
+    $app.innerHTML = `
+      <div class="top">${LOGO}</div>
+      <div class="label route" style="margin-top:28px">Welcome to the club</div>
+      <h1 class="h1">You're in,<br>${esc(firstName(m.name))}.</h1>
+      <p class="body">You're a member now. Every run you check in to counts toward your streak.</p>
+      ${runCard}
+      <div class="card">
+        <div class="label route">What's next</div>
+        <ol class="steps">
+          ${next && next.ticket_url ? '<li><b>Get your ticket</b> on Quicket (button above).</li>' : ''}
+          <li><b>On the morning,</b> scan the club QR at the start line. That's your check-in.</li>
+          ${install}
+          <li><b>Run updates</b> come from <a href="${esc(CFG.CLUB_IG || '#')}" target="_blank" rel="noopener">@6ixamclub_</a>.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <div class="label route">Help shape the app</div>
+        <p class="body" style="margin:8px 0 0">What should we build next? One tap.</p>
+        <div class="vote">${FEATURES.map(([k, t]) => `<button type="button" class="opt${voted === k ? ' on' : ''}" data-k="${k}">${t}</button>`).join('')}</div>
+      </div>
+      <a class="btn" href="#/home">Go to the app</a>
+      ${demoNote()}`;
+    $app.querySelectorAll('.opt').forEach(b => b.onclick = async () => {
+      $app.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b));
+      store.set('six.vote', b.dataset.k); store.set('six.vote.pending', b.dataset.k);
+      toast('Noted. Thanks for the vote.');
+      sendVote();
+    });
+  }
+
   async function viewHome() {
     loading();
+    sendVote();
     const m = me();
     const [st, mine] = await Promise.all([api('status'), api('me', { member_id: m.member_id })]);
     if (!mine.ok && mine.error === 'member_not_found') { store.del('six.member'); return go('#/'); }

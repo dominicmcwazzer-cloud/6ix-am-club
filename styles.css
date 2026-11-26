@@ -70,6 +70,13 @@ a { color: inherit; }
 .add-btn { background: transparent; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--t1); font-weight: 600; cursor: pointer; }
 
 /* in-development grid */
+.steps { margin: 10px 0 0; padding-left: 20px; color: var(--t2); font-size: 15px; line-height: 1.5; }
+.steps li { margin-top: 8px; }
+.steps b { color: var(--t1); }
+.steps a { color: var(--accent); }
+.vote { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.opt { min-height: 52px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--t1); font: 700 13px var(--ui); letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+.opt.on { border-color: var(--accent); background: rgba(var(--accent-rgb),.14); color: var(--accent); }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 .soon { display: block; text-decoration: none; background: var(--surface); border: 1px dashed #333; border-radius: var(--r); padding: 16px; min-height: 104px; }
 .soon .h2 { font-size: 20px; margin-top: 10px; }
