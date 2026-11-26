@@ -299,7 +299,7 @@
   const soonTile = (k, t) => `<a class="soon" href="#/soon/${k}"><span class="tag">Soon</span><div class="h2">${t}</div></a>`;
 
   const SOON = {
-    board: ['The Board', 'A club leaderboard ranked by showing up, not by splits. Built on your check-ins, so every Saturday you scan in already counts.'],
+    board: ['The Board', 'A club leaderboard ranked by showing up, not by splits. Built on your check-ins, so every run you scan in already counts.'],
     live: ['Live run', 'Pace, distance and your route on the morning, with the club playlist. Keep using your usual tracker until this lands.'],
     badges: ['Badges', 'First 5K, Sunrise, 50K Club, streak badges. Earned from your check-ins and runs.'],
     feed: ['Run feed', "Photos from the morning and a note for the crew after every run."],
